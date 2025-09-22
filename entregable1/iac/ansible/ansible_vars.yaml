@@ -1,0 +1,3 @@
+http_host: "LosCinco.com"
+http_conf: "LosCinco.com.conf"
+http_port: "80"
