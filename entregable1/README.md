@@ -27,11 +27,13 @@ La máquina deberá ser accesible desde Internet a través de su dirección IP p
 * Archivos de código fuente de la aplicación PHP de prueba (pueden estar en el mismo directorio que los demás).
 * Sugiero tomar todo y comprimir en un único .ZIP y subir el archivo comprimido solamente.
 
+---
+
 ## Resultado
 
-Para poder realizar toda esta tarea, se procuró cumplir con los lineamientos establecidos en el enunciado: crear una instancia de Amazon EC2 (Elastic Compute Cloud) con Terraform, y configurar un servidor de PHP en Nginx con Ansible.
+Para realizar esta tarea, se cumplieron todos los lineamientos establecidos en el enunciado: crear una instancia de Amazon EC2 (Elastic Compute Cloud) con Terraform y configurar un servidor PHP con Nginx utilizando Ansible.
 
-Para ello, se organizó la entrega de esta forma:
+La entrega se organizó de la siguiente manera:
 
 ```bash
 entregable1/
@@ -55,59 +57,59 @@ entregable1/
 └── README.md
 ```
 
-En [src](./src/) está el código fuente del servidor: la aplicación en PHP y el servidor en Nginx. Realmente, el contenido de la aplicación en PHP es irrelevante, puesto que lo único que interesa es que sea visible desde internet, nada más.
+En [src](./src/) se encuentra el código fuente del servidor: la aplicación PHP y la configuración de Nginx. El contenido de la aplicación PHP es básico, ya que el objetivo principal es demostrar que sea accesible desde internet.
 
-En [scripts](./scripts/) existen scripts escritos por nosotros, para poder utilizar de manera más fácil los comandos de Ansible y Terraform (para más información, ver [aquí](#scripts)). Aun así, es importante mencionar que, debido a cómo resolvimos el problema, para poder utilizar Terraform y Ansible, es necesario ejecutar el script [generate-key.sh](./scripts/generate-key.sh), para obtener un par de claves pública y privada utilizando el algoritmo RSA con 2048 bits. Este script debe ser ejecutado desde Bash, lo que no implica que deba ser propio de Linux, por tanto, en caso de usar Windows, se recomienda utilizar aplicaciones como Git Bash para ejecutar este script. Este par claves son luego guardadas en [keys](./keys/).
+En [scripts](./scripts/) se encuentran scripts creados para facilitar el uso de los comandos de Ansible y Terraform (para más información, consultar la sección [Scripts](#scripts)). Es importante mencionar que, debido a la implementación elegida, para poder utilizar Terraform y Ansible es necesario ejecutar primero el script [generate-key.sh](./scripts/generate-key.sh) para generar un par de claves pública y privada utilizando el algoritmo RSA de 2048 bits. Este script debe ejecutarse desde Bash (en Windows se recomienda usar Git Bash u otro emulador compatible). Las claves generadas se almacenan en el directorio [keys](./keys/).
 
-En [iac](./iac/) está el todo el código de la infraestructura en [Terraform](./iac/terraform/) y [Ansible](./iac/ansible/). Para más información de cada uno de estos, ver: [Terraform](#terraform) y [Ansible](#ansible).
+En [iac](./iac/) se encuentra todo el código de infraestructura como código (IaC) organizado en [Terraform](./iac/terraform/) y [Ansible](./iac/ansible/). Para obtener información detallada de cada herramienta, consultar las secciones [Terraform](#terraform) y [Ansible](#ansible).
 
 ### Scripts
 
-Los scripts encontrados en [scripts/](./scripts/) son todos ejecutables, y deben ser ejecutados desde la raíz de este entregable, es decir, al mismo nivel que este README. Para ejecutarlos, se puede hacer como el siguiente ejemplo:
+Los scripts ubicados en [scripts/](./scripts/) son todos ejecutables y deben ejecutarse desde el directorio raíz de este entregable (al mismo nivel que este README). Ejemplo de ejecución:
 
 ```bash
 .../entregable1$./scripts/terraform-deploy.sh
 ```
 
-Actualmente, los scripts existentes son:
+Los scripts disponibles son:
 
-* [ansible-nginx.sh](./scripts/ansible-nginx.sh). Configurar el servidor en NGINX de la aplicación en PHP.
-* [generate-key](./scripts/generate-key.sh). Para generar el par de claves pública y privada utilizadas por Terraform y Ansible.
-* [terraform-deploy](./scripts/terraform-deploy.sh). Se inicializa Terraform, valida el plan de ejecución, y en caso de todo estar correcto, se aplica.
-* [terraform-destroy](./scripts/terraform-destroy.sh). Para destruir todos los recursos creados con Terraform.
+* [generate-key.sh](./scripts/generate-key.sh): Genera el par de claves pública y privada utilizadas por Terraform y Ansible.
+* [terraform-deploy.sh](./scripts/terraform-deploy.sh): Inicializa Terraform, valida el plan de ejecución y lo aplica si todo es correcto.
+* [ansible-nginx.sh](./scripts/ansible-nginx.sh): Configura el servidor Nginx con la aplicación PHP.
+* [terraform-destroy.sh](./scripts/terraform-destroy.sh): Destruye todos los recursos creados con Terraform.
 
 ### Terraform
 
-En Terraform se creó una instancia de Amazon EC2, teniendo en cuenta los detalles acerca los grupos de seguridad, para permitir que se pueda recibir tráfico desde el internet, hacia la instancia por los puertos 22 (SSH) y 80 (HTTP). El puerto 80 fue habilitado, porque fue uno de los requerimientos del enunciado, pero el 22 también se habilitó para que en Ansible sea posible conectarse al servidor y poder realizar toda la instalación correspondiente, declarando la llave pública con la que se conectará. Por último, el tráfico saliente del servidor se habilitó hacia todo el internet.
+Con Terraform se creó una instancia de Amazon EC2, configurando los grupos de seguridad necesarios para permitir tráfico desde internet hacia la instancia por los puertos 22 (SSH) y 80 (HTTP). El puerto 80 se habilitó como requerimiento del enunciado, mientras que el puerto 22 se habilitó para permitir que Ansible pueda conectarse al servidor y realizar la instalación correspondiente, declarando la clave pública que se utilizará para la conexión. Adicionalmente, se habilitó todo el tráfico saliente del servidor hacia internet.
 
 ### Ansible
 
-Como Ansible se debe conectar al servidor, se necesita sí o sí, la IP de la instancia de EC2, y para evitar que se busque directamente desde la consola de AWS, siempre que se despliega la aplicación con Terraform, se muestra la IP pública que se debe especificar en el inventario ([inventory](./iac//ansible/inventory)): `ansible_host=<PUBLIC-IP-ADDRESS>`, `<PUBLIC-IP-ADDRESS>` es solamente un placeholder. Una vez se reemplaza la dirección de la IP pública del servidor, es posible utilizar Ansible sin mayor problemas.
+Para que Ansible pueda conectarse al servidor, es indispensable conocer la dirección IP de la instancia EC2. Con el objetivo de evitar buscar esta información manualmente en la consola de AWS, cada vez que se despliega la infraestructura con Terraform, se muestra la IP pública que debe especificarse en el archivo de inventario ([inventory](./iac//ansible/inventory)) reemplazando el placeholder `<PUBLIC-IP-ADDRESS>` en la línea `ansible_host=<PUBLIC-IP-ADDRESS>`. Una vez actualizada la dirección IP pública del servidor, es posible utilizar Ansible sin inconvenientes.
 
 ---
 
 ### Evidencias
 
-Para evitar cualquier tipo de malentendidos, hemos preferido mostrar con capturas de pantalla el funcionamiento de la aplicación, y así demostrar que sí funciona nuestra solución.
+Para demostrar el correcto funcionamiento de la solución implementada, se incluyen capturas de pantalla que muestran cada etapa del proceso de despliegue y configuración.
 
-#### Generar clave
+#### Generación de claves
 
 ![Generate Key](./figures/generate-key.png)
 
-#### Funcionamiento Terraform
+#### Funcionamiento de Terraform
 
-##### Deploy
+##### Despliegue
 
 ![Terraform Deploy](./figures/terraform-deploy.png)
 
-##### Destroy
+##### Destrucción de recursos
 
 ![Terraform Destroy](./figures/terraform-destroy.png)
 
-#### Funcionamiento Ansible
+#### Funcionamiento de Ansible
 
 ![Ansible Working](./figures/ansible-working.png)
 
-#### Funcionamiento Servidor Web
+#### Funcionamiento del servidor web
 
 ![Web Server Working](./figures/php-server.png)
