@@ -8,3 +8,4 @@ terraform.tfstate.backup
 *.key
 *.pub
 id_rsa
+.~lock*
