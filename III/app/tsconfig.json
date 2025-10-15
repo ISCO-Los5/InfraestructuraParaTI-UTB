@@ -3,16 +3,14 @@
         "target": "ESNext",
         "jsx": "react-jsx",
         "jsxImportSource": "hono/jsx",
-        "module": "node16",
-        "moduleResolution": "nodenext",
+        "module": "esnext",
+        "moduleResolution": "bundler",
         "paths": {
             "@/*": ["./src/*"],
             "@@/*": ["./*"]
         },
         "types": ["node"],
-        "allowImportingTsExtensions": true,
         "strict": true,
-        "noEmit": true,
         "outDir": "./dist",
         "verbatimModuleSyntax": true,
         "skipLibCheck": true
