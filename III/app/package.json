@@ -1,0 +1,25 @@
+{
+    "name": "@iii/app",
+    "type": "module",
+    "scripts": {
+        "dev": "tsx watch src/index.ts",
+        "build": "tsc",
+        "start": "node dist/index.js",
+        "drizzle:push": "npx drizzle-kit push"
+    },
+    "dependencies": {
+        "@hono/node-server": "^1.19.5",
+        "dotenv": "^17.2.3",
+        "drizzle-orm": "^0.44.6",
+        "hono": "^4.9.12",
+        "mysql2": "^3.15.2"
+    },
+    "devDependencies": {
+        "@antfu/eslint-config": "^6.0.0",
+        "@types/node": "^20.11.17",
+        "drizzle-kit": "^0.31.5",
+        "eslint": "^9.37.0",
+        "tsx": "^4.7.1",
+        "typescript": "^5.8.3"
+    }
+}

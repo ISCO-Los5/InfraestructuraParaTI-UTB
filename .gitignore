@@ -9,3 +9,5 @@ terraform.tfstate.backup
 *.pub
 id_rsa
 .~lock*
+
+node_modules
