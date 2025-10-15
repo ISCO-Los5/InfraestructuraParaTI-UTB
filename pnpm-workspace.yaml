@@ -3,4 +3,4 @@ linkWorkspacePackages: true
 injectWorkspacePackages: true
 
 packages:
-    - "III/app"
+    - "**/**"
