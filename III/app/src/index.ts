@@ -2,7 +2,7 @@ import process from "node:process";
 import { serve } from "@hono/node-server";
 import { consola } from "consola";
 import { Hono } from "hono";
-import "dotenv/config";
+import { router as _user } from "@/routes/user";
 
 const app = new Hono();
 
@@ -13,6 +13,8 @@ app.get("/health", (context) => {
     });
 });
 
+app.route("/api", _user);
+
 const server = serve(
     {
         fetch: app.fetch,
@@ -20,6 +22,7 @@ const server = serve(
     },
     (info) => {
         consola.log(`Server is running on http://localhost:${info.port}`);
+        consola.log(process.env);
     },
 );
 
