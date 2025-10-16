@@ -1,12 +1,12 @@
 FROM node:lts-alpine
 
-WORKDIR /app
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
+WORKDIR /app
 
-COPY . /app/
+COPY . .
 
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod
 
-CMD [ "node", "server.js" ]
+CMD ["node", "server.js"]
