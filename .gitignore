@@ -11,3 +11,5 @@ id_rsa
 .~lock*
 
 node_modules
+
+*.tfvars

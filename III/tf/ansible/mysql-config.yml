@@ -1,0 +1,143 @@
+---
+- name: Configurar MySQL Server
+  hosts: mysql_vm
+  become: yes
+  vars:
+      mysql_root_password: "{{ lookup('env', 'MYSQL_ROOT_PASSWORD') }}"
+      mysql_database: "{{ lookup('env', 'MYSQL_DATABASE') }}"
+      mysql_user: "{{ lookup('env', 'MYSQL_USER') }}"
+      mysql_password: "{{ lookup('env', 'MYSQL_PASSWORD') }}"
+      app_subnet_cidr: "10.0.2.0/24"
+
+  tasks:
+      - name: Verificar que MySQL está corriendo
+        service:
+            name: mysql
+            state: started
+            enabled: yes
+
+      - name: Instalar PyMySQL para Ansible
+        pip:
+            name: pymysql
+            state: present
+            executable: pip3
+
+      - name: Configurar MySQL para conexiones remotas
+        lineinfile:
+            path: /etc/mysql/mysql.conf.d/mysqld.cnf
+            regexp: "^bind-address"
+            line: "bind-address = 0.0.0.0"
+            backup: yes
+        notify: restart mysql
+
+      - name: Configurar max_connections
+        lineinfile:
+            path: /etc/mysql/mysql.conf.d/mysqld.cnf
+            regexp: "^max_connections"
+            line: "max_connections = 200"
+            insertafter: '^\[mysqld\]'
+        notify: restart mysql
+
+      - name: Configurar character set a utf8mb4
+        blockinfile:
+            path: /etc/mysql/mysql.conf.d/mysqld.cnf
+            block: |
+                character-set-server = utf8mb4
+                collation-server = utf8mb4_unicode_ci
+            marker: "# {mark} ANSIBLE MANAGED BLOCK - UTF8"
+        notify: restart mysql
+
+      - name: Habilitar logs de MySQL
+        blockinfile:
+            path: /etc/mysql/mysql.conf.d/mysqld.cnf
+            block: |
+                general_log = 1
+                general_log_file = /var/log/mysql/mysql.log
+                slow_query_log = 1
+                slow_query_log_file = /var/log/mysql/mysql-slow.log
+                long_query_time = 2
+            marker: "# {mark} ANSIBLE MANAGED BLOCK - LOGS"
+        notify: restart mysql
+
+      - name: Asegurar que el directorio de logs existe
+        file:
+            path: /var/log/mysql
+            state: directory
+            owner: mysql
+            group: mysql
+            mode: "0755"
+
+      - name: Verificar que la base de datos existe
+        mysql_db:
+            name: "{{ mysql_database }}"
+            state: present
+            login_user: root
+            login_password: "{{ mysql_root_password }}"
+            login_unix_socket: /var/run/mysqld/mysqld.sock
+
+      - name: Crear usuario de aplicación con permisos limitados
+        mysql_user:
+            name: "{{ mysql_user }}"
+            password: "{{ mysql_password }}"
+            host: "{{ app_subnet_cidr }}"
+            priv: "{{ mysql_database }}.*:ALL"
+            state: present
+            login_user: root
+            login_password: "{{ mysql_root_password }}"
+            login_unix_socket: /var/run/mysqld/mysqld.sock
+
+      - name: Remover usuarios anónimos
+        mysql_user:
+            name: ""
+            host_all: yes
+            state: absent
+            login_user: root
+            login_password: "{{ mysql_root_password }}"
+            login_unix_socket: /var/run/mysqld/mysqld.sock
+
+      - name: Remover base de datos de prueba
+        mysql_db:
+            name: test
+            state: absent
+            login_user: root
+            login_password: "{{ mysql_root_password }}"
+            login_unix_socket: /var/run/mysqld/mysqld.sock
+
+      - name: Configurar backup automático
+        cron:
+            name: "MySQL daily backup"
+            minute: "0"
+            hour: "2"
+            job: "/usr/bin/mysqldump -u root -p'{{ mysql_root_password }}' --all-databases | gzip > /var/backups/mysql_$(date +\\%Y\\%m\\%d).sql.gz"
+            user: root
+
+      - name: Crear directorio de backups
+        file:
+            path: /var/backups
+            state: directory
+            mode: "0700"
+
+      - name: Configurar firewall UFW
+        ufw:
+            rule: allow
+            from_ip: "{{ app_subnet_cidr }}"
+            to_port: "3306"
+            proto: tcp
+
+      - name: Denegar acceso MySQL desde otras redes
+        ufw:
+            rule: deny
+            to_port: "3306"
+            proto: tcp
+
+      - name: Habilitar UFW
+        ufw:
+            state: enabled
+            policy: deny
+            direction: incoming
+
+  handlers:
+      - name: restart mysql
+        service:
+            name: mysql
+            state: restarted
