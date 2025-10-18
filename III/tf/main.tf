@@ -131,7 +131,7 @@ resource "local_sensitive_file" "private_key" {
 }
 
 # ============================================
-# MYSQL VM - NETWORK INTERFACE (SIN IP PÚBLICA)
+# MYSQL VM - NETWORK INTERFACE
 # ============================================
 resource "azurerm_network_interface" "mysql_nic" {
   name                = "mysql-nic-los5"
@@ -143,18 +143,28 @@ resource "azurerm_network_interface" "mysql_nic" {
     subnet_id                     = azurerm_subnet.db_subnet.id
     private_ip_address_allocation = "Static"
     private_ip_address            = "10.0.1.10"
+    public_ip_address_id          = azurerm_public_ip.mysql_public_ip.id
   }
 }
 
 # ============================================
 # MYSQL VIRTUAL MACHINE
 # ============================================
+resource "azurerm_public_ip" "mysql_public_ip" {
+  name                = "mysql-public-ip-los5"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+}
+
+
 resource "azurerm_linux_virtual_machine" "mysql_vm" {
   name                  = "mysql-vm-los5"
   location              = azurerm_resource_group.rg.location
   resource_group_name   = azurerm_resource_group.rg.name
   network_interface_ids = [azurerm_network_interface.mysql_nic.id]
-  size                  = "Standard_DS1_v2"
+  size                  = "Standard_B1s"
 
   os_disk {
     name                 = "mysql-os-disk"
@@ -192,7 +202,7 @@ resource "azurerm_service_plan" "app_plan" {
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   os_type             = "Linux"
-  sku_name            = "F1"
+  sku_name            = "B1"
 
   tags = {
     Environment = "Production"

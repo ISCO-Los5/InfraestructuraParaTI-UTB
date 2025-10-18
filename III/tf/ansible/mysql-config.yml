@@ -3,18 +3,26 @@
   hosts: mysql_vm
   become: yes
   vars:
-      mysql_root_password: "{{ lookup('env', 'MYSQL_ROOT_PASSWORD') }}"
-      mysql_database: "{{ lookup('env', 'MYSQL_DATABASE') }}"
-      mysql_user: "{{ lookup('env', 'MYSQL_USER') }}"
-      mysql_password: "{{ lookup('env', 'MYSQL_PASSWORD') }}"
       app_subnet_cidr: "10.0.2.0/24"
 
   tasks:
+      - name: Instalar MySQL server
+        apt:
+            name: mysql-server
+            state: present
+            update_cache: yes
+
       - name: Verificar que MySQL está corriendo
         service:
             name: mysql
             state: started
             enabled: yes
+
+      - name: Instalar pip3
+        apt:
+            name: python3-pip
+            state: present
+            update_cache: yes
 
       - name: Instalar PyMySQL para Ansible
         pip:
@@ -66,6 +74,9 @@
             owner: mysql
             group: mysql
             mode: "0755"
+
+      - debug:
+            var: mysql_database
 
       - name: Verificar que la base de datos existe
         mysql_db:
