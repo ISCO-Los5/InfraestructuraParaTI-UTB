@@ -30,7 +30,7 @@ jobs:
 
             - name: set image tag
               id: tag
-              run: echo "image_tag=${{ secrets.DOCKERHUB_USER }}/III-app:${{ github.sha }}" >> $GITHUB_OUTPUT
+              run: echo "image_tag=${{ secrets.DOCKERHUB_USER }}/iii-app:${{ github.sha }}" >> $GITHUB_OUTPUT
 
             - name: build and push image
               uses: docker/build-push-action@v6
