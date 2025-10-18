@@ -5,4 +5,12 @@ terraform {
       version = "~>4.0"
     }
   }
+
+  cloud {
+    organization = "los-5"
+
+    workspaces {
+      name = "iii-app"
+    }
+  }
 }
