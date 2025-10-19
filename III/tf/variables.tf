@@ -32,7 +32,7 @@ variable "mysql_root_password" {
   }
 }
 
-variable "mysql_database" {
+variable "mysql_db" {
   description = "Nombre de la base de datos"
   type        = string
   default     = "appdb"

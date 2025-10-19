@@ -10,6 +10,14 @@ terraform {
       version = "~>4.0"
     }
   }
+
+  cloud {
+    organization = "los-5"
+
+    workspaces {
+      name = "iii-app"
+    }
+  }
 }
 
 provider "azurerm" {
@@ -22,7 +30,7 @@ provider "azurerm" {
 # RESOURCE GROUP
 # ============================================
 resource "azurerm_resource_group" "rg" {
-  name     = "rg-los5-v2"
+  name     = "rg-los5"
   location = var.resource_group_location
 }
 
@@ -83,16 +91,28 @@ resource "azurerm_network_security_group" "db_nsg" {
     destination_address_prefix = "*"
   }
 
-  # Permitir MySQL solo desde la subnet del App Service
+  # ⭐ CAMBIADO: Permitir MySQL desde toda la VNet (más permisivo pero funcional)
   security_rule {
-    name                       = "AllowMySQLFromAppSubnet"
+    name                       = "AllowMySQLFromVNet"
     priority                   = 110
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "3306"
-    source_address_prefix      = "10.0.2.0/24"
+    source_address_prefix      = "10.0.0.0/16"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "AllowMySQLFromAppService"
+    priority                   = 115
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "3306"
+    source_address_prefix      = "AzureCloud" # Service Tag
     destination_address_prefix = "*"
   }
 
@@ -222,10 +242,11 @@ resource "azurerm_linux_web_app" "node_app" {
   virtual_network_subnet_id = azurerm_subnet.app_subnet.id
 
   site_config {
-    always_on           = false
-    minimum_tls_version = "1.2"
-    ftps_state          = "Disabled"
-    http2_enabled       = true
+    always_on              = false
+    minimum_tls_version    = "1.2"
+    ftps_state             = "Disabled"
+    http2_enabled          = true
+    vnet_route_all_enabled = true
 
     application_stack {
       docker_image_name = var.docker_image
@@ -240,7 +261,7 @@ resource "azurerm_linux_web_app" "node_app" {
     "MYSQL_PORT"     = "3306"
     "MYSQL_USER"     = var.mysql_user
     "MYSQL_PASSWORD" = var.mysql_password
-    "MYSQL_DATABASE" = var.mysql_database
+    "MYSQL_DB"       = var.mysql_db
     "NODE_ENV"       = "production"
   }
 
