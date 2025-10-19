@@ -11,13 +11,13 @@ terraform {
     }
   }
 
-  cloud {
-    organization = "los-5"
+  # cloud {
+  #   organization = "los-5"
 
-    workspaces {
-      name = "iii-app"
-    }
-  }
+  #   workspaces {
+  #     name = "iii-app"
+  #   }
+  # }
 }
 
 provider "azurerm" {

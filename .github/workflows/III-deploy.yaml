@@ -36,24 +36,24 @@ jobs:
                   push: true
                   tags: ${{ secrets.DOCKERHUB_USER }}/iii-app:${{ github.sha }}
 
-    deploy:
-        runs-on: ubuntu-latest
-        needs: [build-push]
-        steps:
-            - name: setup terraform
-              uses: hashicorp/setup-terraform@v3
-              with:
-                  terraform_version: "latest"
-                  cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+    # deploy:
+    #     runs-on: ubuntu-latest
+    #     needs: [build-push]
+    #     steps:
+    #         - name: setup terraform
+    #           uses: hashicorp/setup-terraform@v3
+    #           with:
+    #               terraform_version: "latest"
+    #               cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-            - uses: actions/checkout@v5
-            - name: run terraform
-              run: |
-                  set -e
+    #         - uses: actions/checkout@v5
+    #         - name: run terraform
+    #           run: |
+    #               set -e
 
-                  cd III/tf
+    #               cd III/tf
 
-                  terraform init -input=false
-                  terraform apply -input=false -auto-approve
-              env:
-                  TF_VAR_IMAGE_TAG: ${{ secrets.DOCKERHUB_USER }}/iii-app:${{ needs.build-push.outputs.image_tag }}
+    #               terraform init -input=false
+    #               terraform apply -input=false -auto-approve
+    #           env:
+    #               TF_VAR_IMAGE_TAG: ${{ secrets.DOCKERHUB_USER }}/iii-app:${{ needs.build-push.outputs.image_tag }}
