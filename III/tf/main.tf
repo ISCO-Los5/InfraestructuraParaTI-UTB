@@ -314,5 +314,3 @@ output "ssh_connection_command" {
   value       = "ssh -i ${local_sensitive_file.private_key.filename} ${var.admin_username}@${azurerm_network_interface.mysql_nic.private_ip_address}"
   sensitive   = true
 }
-
-
