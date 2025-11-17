@@ -13,3 +13,6 @@ id_rsa
 node_modules
 
 *.tfvars
+
+**/__pycache__/
+*.pyc
