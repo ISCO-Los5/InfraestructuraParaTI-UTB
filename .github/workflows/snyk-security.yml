@@ -23,10 +23,12 @@ on:
     branches: ["main" ]
     paths:
       - "V/"
+      - ".github/workflows/snyk-security.yml"
   pull_request:
     branches: ["main"]
     paths:
       - "V/"
+      - ".github/workflows/snyk-security.yml"
 
 permissions:
   contents: read
