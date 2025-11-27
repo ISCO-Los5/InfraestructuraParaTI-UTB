@@ -55,50 +55,17 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           image: image-to-test
-          args: --file=V/Dockerfile --sarif-file-output=snyk.sarif
+          args: --file=V/Dockerfile --json-file-output=snyk.json
 
-      - name: Fix SARIF severity values
+      - name: Convert to SARIF
         run: |
-          if [ -f snyk.sarif ]; then
-            # Reemplaza TODOS los null en severity (diferentes formatos)
-            python3 << 'EOF'
-            import json
-            import sys
+          echo "Snyk JSON output:"
+          cat snyk.json
 
-            with open('snyk.sarif', 'r') as f:
-                sarif = json.load(f)
+          npx @microsoft/sarif-multitool convert snyk.json -t Snyk -o snyk.sarif || true
 
-            # Recorre todas las runs y rules para corregir severity
-            for run in sarif.get('runs', []):
-                # Corrige en rules
-                for rule in run.get('tool', {}).get('driver', {}).get('rules', []):
-                    if 'defaultConfiguration' in rule:
-                        if rule['defaultConfiguration'].get('level') is None:
-                            rule['defaultConfiguration']['level'] = 'note'
-                        # Corrige severity dentro de properties
-                        if 'properties' in rule['defaultConfiguration']:
-                            props = rule['defaultConfiguration']['properties']
-                            if props.get('security-severity') is None:
-                                props['security-severity'] = '0.0'
-                    # Corrige properties a nivel de rule
-                    if 'properties' in rule:
-                        if rule['properties'].get('security-severity') is None:
-                            rule['properties']['security-severity'] = '0.0'
-                
-                # Corrige en results
-                for result in run.get('results', []):
-                    if 'level' in result and result['level'] is None:
-                        result['level'] = 'note'
-                    if 'properties' in result:
-                        if result['properties'].get('security-severity') is None:
-                            result['properties']['security-severity'] = '0.0'
-
-            with open('snyk.sarif', 'w') as f:
-                json.dump(sarif, f, indent=2)
-
-            print("SARIF fixed successfully")
-            EOF
-          fi
+          echo "Converted SARIF:"
+          cat snyk.sarif
 
       - name: Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v4
