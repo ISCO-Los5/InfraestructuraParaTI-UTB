@@ -42,6 +42,15 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build a Docker image
         run: docker build -t image-to-test V/
+
+      - name: Install Snyk CLI
+        run: npm install -g snyk
+
+      - name: Authenticate to Snyk
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk auth $SNYK_TOKEN
+
       - name: Run Snyk to check Docker image for vulnerabilities
         # Snyk can be used to break the build when it detects vulnerabilities.
         # In this case we want to upload the issues to GitHub Code Scanning
@@ -54,7 +63,27 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           image: image-to-test
-          args: --file=V/Dockerfile
+          args: --file=V/Dockerfile --sarif-file-output=snyk.sarif
+
+        # optional: upload to Snyk dashboard
+      - name: Run Snyk container scan and write SARIF
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          snyk container test image-to-test --file=V/Dockerfile --sarif-file-output=./snyk.sarif || true
+          snyk monitor --file=V/Dockerfile --image=image-to-test || true
+
+      - name: Validate SARIF file
+        run: |
+          if [ ! -s snyk.sarif ]; then
+            echo "ERROR: snyk.sarif missing or empty"
+            ls -la
+            exit 1
+          fi
+          # comprueba que es JSON válido
+          python -m json.tool snyk.sarif > /dev/null
+          echo "SARIF generado y válido"
+
       - name: Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v4
         with:
