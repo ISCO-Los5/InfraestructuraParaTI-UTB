@@ -43,14 +43,6 @@ jobs:
       - name: Build a Docker image
         run: docker build -t image-to-test V/
 
-      - name: Install Snyk CLI
-        run: npm install -g snyk
-
-      - name: Authenticate to Snyk
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk auth $SNYK_TOKEN
-
       - name: Run Snyk to check Docker image for vulnerabilities
         # Snyk can be used to break the build when it detects vulnerabilities.
         # In this case we want to upload the issues to GitHub Code Scanning
@@ -68,10 +60,44 @@ jobs:
       - name: Fix SARIF severity values
         run: |
           if [ -f snyk.sarif ]; then
-            # Replace severity null with 0.0
-            sed -i 's/"severity": null/"severity": 0.0/g' snyk.sarif
-            # Validate that it's valid JSON after the fix
-            python3 -m json.tool snyk.sarif > /dev/null && echo "SARIF fixed and validated"
+            # Reemplaza TODOS los null en severity (diferentes formatos)
+            python3 << 'EOF'
+            import json
+            import sys
+
+            with open('snyk.sarif', 'r') as f:
+                sarif = json.load(f)
+
+            # Recorre todas las runs y rules para corregir severity
+            for run in sarif.get('runs', []):
+                # Corrige en rules
+                for rule in run.get('tool', {}).get('driver', {}).get('rules', []):
+                    if 'defaultConfiguration' in rule:
+                        if rule['defaultConfiguration'].get('level') is None:
+                            rule['defaultConfiguration']['level'] = 'note'
+                        # Corrige severity dentro de properties
+                        if 'properties' in rule['defaultConfiguration']:
+                            props = rule['defaultConfiguration']['properties']
+                            if props.get('security-severity') is None:
+                                props['security-severity'] = '0.0'
+                    # Corrige properties a nivel de rule
+                    if 'properties' in rule:
+                        if rule['properties'].get('security-severity') is None:
+                            rule['properties']['security-severity'] = '0.0'
+                
+                # Corrige en results
+                for result in run.get('results', []):
+                    if 'level' in result and result['level'] is None:
+                        result['level'] = 'note'
+                    if 'properties' in result:
+                        if result['properties'].get('security-severity') is None:
+                            result['properties']['security-severity'] = '0.0'
+
+            with open('snyk.sarif', 'w') as f:
+                json.dump(sarif, f, indent=2)
+
+            print("SARIF fixed successfully")
+            EOF
           fi
 
       - name: Upload result to GitHub Code Scanning
