@@ -32,3 +32,5 @@ Deben clonar el repositorio y desarrollar la actividad y aplicar los cambios nec
 ## Resultados
 
 ...
+
+<!-- Test to test Snyk workflow trigger -->
