@@ -65,24 +65,14 @@ jobs:
           image: image-to-test
           args: --file=V/Dockerfile --sarif-file-output=snyk.sarif
 
-        # optional: upload to Snyk dashboard
-      - name: Run Snyk container scan and write SARIF
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - name: Fix SARIF severity values
         run: |
-          snyk container test image-to-test --file=V/Dockerfile --sarif-file-output=./snyk.sarif || true
-          snyk monitor --file=V/Dockerfile --image=image-to-test || true
-
-      - name: Validate SARIF file
-        run: |
-          if [ ! -s snyk.sarif ]; then
-            echo "ERROR: snyk.sarif missing or empty"
-            ls -la
-            exit 1
+          if [ -f snyk.sarif ]; then
+            # Replace severity null with 0.0
+            sed -i 's/"severity": null/"severity": 0.0/g' snyk.sarif
+            # Validate that it's valid JSON after the fix
+            python3 -m json.tool snyk.sarif > /dev/null && echo "SARIF fixed and validated"
           fi
-          # comprueba que es JSON válido
-          python -m json.tool snyk.sarif > /dev/null
-          echo "SARIF generado y válido"
 
       - name: Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v4
