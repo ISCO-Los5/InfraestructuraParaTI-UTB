@@ -57,15 +57,10 @@ jobs:
           image: image-to-test
           args: --file=V/Dockerfile --json-file-output=snyk.json
 
-      - name: Convert to SARIF
-        run: |
-          echo "Snyk JSON output:"
-          cat snyk.json
-
-          npx @microsoft/sarif-multitool convert snyk.json -t Snyk -o snyk.sarif || true
-
-          echo "Converted SARIF:"
-          cat snyk.sarif
+      - uses: garethr/snyk-to-sarif@master
+        with:
+          input: snyk.json
+          output: snyk.sarif
 
       - name: Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v4
