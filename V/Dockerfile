@@ -1,5 +1,5 @@
 # Use a newer, secure Node.js runtime
-FROM node:20.19.6-trixie-slim
+FROM node:20.19.6-alpine3.22
 
 # Set the working directory in the container
 WORKDIR /usr/src/app
