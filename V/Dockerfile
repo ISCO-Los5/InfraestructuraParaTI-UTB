@@ -1,5 +1,5 @@
 # Use a newer, secure Node.js runtime
-FROM node:20.19.6-alpine3.22
+FROM node:20.20.0-alpine3.22
 
 # Actualizar Busybox y paquetes del sistema
 RUN apk update && apk upgrade
